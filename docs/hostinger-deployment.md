@@ -18,6 +18,18 @@ O repositório contém o aplicativo Next.js completo. As páginas públicas publ
 
 O Supabase continua sendo o banco; não executar scripts de seed ou recriar o banco ao importar o projeto. Migrações novas precisam seguir o processo de implantação próprio.
 
+## Compatibilidade do build com a Hostinger
+
+O projeto usa `next.config.mjs`, para carregar a configuração sem transpilar TypeScript, e `npm run build` executa `next build --webpack`. Essa combinação permite ao Next.js usar o fallback SWC WebAssembly quando o compilador nativo não carrega por incompatibilidade de glibc. Turbopack exige o compilador nativo; a Hostinger orienta usar Webpack nas versões Next.js 16.3.3 ou posteriores nesse ambiente.
+
+No hPanel, manter Node.js **22**, build **`npm run build`** e saída **`.next`**. Um comando sobrescrito como `next build` ignora a correção do script. Fazer novo deploy do commit corrigido. Se houver cache antigo, limpar o cache de build pela hospedagem e reinstalar usando o lockfile versionado. Não é necessário apagar `package-lock.json`, trocar a versão do Next.js ou tentar instalar um pacote musl num sistema glibc.
+
+O fallback WASM pode ser baixado pelo próprio Next.js; o ambiente de build precisa permitir esse download. Arquivos temporários como `<hash>.next.config.ts` são ignorados pelo Git. Eles não estavam no repositório quando a falha foi relatada.
+
+Referência: [compatibilidade Next.js/Turbopack na Hostinger](https://www.hostinger.com/support/how-to-fix-next-js-16-turbopack-build-errors-on-hostinger/).
+
+Validação da correção em 21/10/2026: build Webpack concluído em Windows com o fallback WASM forçado pelo mecanismo de teste do Next.js, sem mudar as dependências. A flag interna de teste não faz parte da configuração de produção. O servidor `next start` desse build serviu login, páginas públicas e demonstração, incluindo filtro de plataforma. Também passaram 77 testes, lint e tipagem. Essa validação exercita o caminho WASM, mas não reproduz o Linux/glibc da Hostinger; o novo deploy no provedor ainda precisa ser confirmado.
+
 ## Referências
 
 - [Implantação Node.js na Hostinger](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/)
