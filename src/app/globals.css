@@ -377,6 +377,18 @@ h1, h2, h3, p { margin: 0; }
   .connection-steps { gap: 8px 16px; }
 }
 .platform-scope { display: inline-block; margin-left: 10px; font-size: .8125rem; font-weight: 400; color: var(--text-secondary); }
+.data-freshness { margin: 0 0 24px; padding: 16px 20px; background: #edf3f8; border: 1px solid #bdccde; border-radius: 6px; font-size: .8125rem; }
+.data-freshness.needs-attention { background: #fff8eb; border-color: #ddc695; }
+.freshness-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.freshness-heading a { color: #275cce; margin-left: auto; display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+.data-freshness p { margin-top: 8px; line-height: 1.7; }
+.data-freshness summary { cursor: pointer; min-height: 44px; padding: 12px 0; color: #254e83; }
+.data-freshness li { border-top: 1px solid #bdccde; padding: 12px 0; }
+.data-freshness li > div { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; }
+.data-freshness li strong { overflow-wrap: anywhere; }
+.freshness-recent { color: #24654f; }
+.freshness-warning { color: #805518; }
+.data-freshness .freshness-note { color: #576b82; font-size: .75rem; }
 .campaign-filter { display: flex; align-items: center; gap: 10px; padding: 0 12px; border: 1px solid #bdccde; border-radius: 8px; background: white; color: #425b74; font-size: .8125rem; }
 .campaign-filter select { min-height: 44px; background: transparent; padding-right: 8px; }
 .metric-description { display: block; font-size: .75rem; font-weight: 400; color: var(--text-secondary); margin-top: 4px; white-space: normal; max-width: 220px; overflow-wrap: anywhere; }

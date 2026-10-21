@@ -1,4 +1,6 @@
 import { PlatformFilter } from "./platform-filter";
+import { DataFreshness } from "./data-freshness";
+import type { PlatformFreshness } from "@/lib/data-freshness";
 import { platformCatalog, platformLabels, type AvailablePlatform, type PlatformFilter as Platform } from "@/lib/platform";
 import { ArrowDown, ArrowUp, FlaskConical, TrendingUp, UsersRound, ChevronDown } from "lucide-react";
 import { totals, delta, type DailyMetrics, type EntityMetrics, type Totals } from "@/lib/metrics";
@@ -19,22 +21,22 @@ const kpis: { key: keyof Totals; label: string; format: (v: number | null) => st
   { key: "ctr", label: "Taxa de cliques", format: pct, better: "up" },
   { key: "cpc", label: "Custo por clique", format: money, better: "down" },
 ];
-export type PlatformReport = { platform: AvailablePlatform; series: DailyMetrics[]; previous: DailyMetrics[]; entities: EntityMetrics[] };
+export type PlatformReport = { platform: AvailablePlatform; series: DailyMetrics[]; previous: DailyMetrics[]; entities: EntityMetrics[]; freshness?: PlatformFreshness };
 
-export function Dashboard({ period, reports, basePath, demo = false, status = "all", platform = "all" }: {
-  period: Period; reports: PlatformReport[]; basePath: string; demo?: boolean; status?: CampaignStatus; platform?: Platform;
+export function Dashboard({ period, reports, basePath, demo = false, status = "all", platform = "all", manageHref }: {
+  period: Period; reports: PlatformReport[]; basePath: string; demo?: boolean; status?: CampaignStatus; platform?: Platform; manageHref?: string;
 }) {
   return <>
     <div className="page-heading"><div><h1>Visão geral</h1><p>Entenda o desempenho de cada plataforma, separadamente.</p></div></div>
     <div className="analysis-toolbar"><div className="report-filters"><PlatformFilter period={period} status={status} platform={platform} /><CampaignFilter period={period} status={status} platform={platform} /><PeriodSelect key={`${period.range}-${period.from}-${period.to}`} period={period} status={status} platform={platform} /></div><p>Mesmo período, análises independentes. Resultados e custos não são combinados entre plataformas.</p></div>
     {demo && <div className="demo-notice"><FlaskConical size={18} /><span><strong>Explore o seu futuro painel.</strong> Esta demonstração usa dados fictícios de uma empresa de internet.</span></div>}
     {platform === "all" && <nav className="platform-jump" aria-label="Ir para análise da plataforma">{reports.map(report => <a key={report.platform} href={`#analysis-${report.platform}`}>{platformLabels[report.platform]}<ArrowDown size={14} /></a>)}</nav>}
-    {reports.map(report => <PlatformAnalysis key={report.platform} {...report} period={period} basePath={basePath} status={status} view={platform} />)}
+    {reports.map(report => <PlatformAnalysis key={report.platform} {...report} period={period} basePath={basePath} status={status} view={platform} manageHref={manageHref} />)}
   </>;
 }
 
-function PlatformAnalysis({ period, series, previous, entities, basePath, status, platform, view }: PlatformReport & {
-  period: Period; basePath: string; status: CampaignStatus; view: Platform;
+function PlatformAnalysis({ period, series, previous, entities, basePath, status, platform, view, freshness, manageHref }: PlatformReport & {
+  period: Period; basePath: string; status: CampaignStatus; view: Platform; manageHref?: string;
 }) {
   const current = totals(series), old = totals(previous);
   const summary = summarizeResults(entities.filter(e => e.spend !== 0 || e.impressions > 0 || e.clicks > 0 || e.results?.length));
@@ -48,6 +50,7 @@ function PlatformAnalysis({ period, series, previous, entities, basePath, status
   const resultSeries = series.map(row => ({ ...row, result: row.result_complete === false ? null : row.results?.find(r => r.type === primary?.type)?.value ?? null }));
   return <section className={`platform-analysis analysis-${platform}`} id={`analysis-${platform}`} aria-label={`Análise ${platformLabels[platform]}`}>
     <header className="platform-heading"><div><h2>{platformLabels[platform]}</h2><p>{platformCatalog[platform].analysisDescription}</p></div><span>{shortDate(period.from)} — {shortDate(period.to)}</span></header>
+    {freshness && <DataFreshness data={freshness} manageHref={manageHref} />}
     {!entities.length && <p className="platform-empty">Nenhuma campanha desta plataforma para os filtros selecionados. Ajuste o status ou confira o vínculo e a sincronização da conta.</p>}
     <div className="kpi-grid">{kpis.map((kpi, index) => {
       const value = current[kpi.key], before = old[kpi.key];

@@ -36,6 +36,8 @@ Os documentos anteriores contêm registros históricos: os bloqueios antigos de 
 
 ## Próximo pacote concreto
 
+Progresso do item 2: indicador de atualização por plataforma/conta implementado localmente em 21/10/2026, com horários, janelas e estados de falha/atraso. A conciliação das métricas com cada provedor e a aferição de cobertura integral dos períodos ainda não estão concluídas. A importação inicial na Hostinger está sendo conduzida pelo responsável; manter melhorias posteriores em branch separada durante esse processo.
+
 Executar os itens 1–3 como preparação de um piloto: inventário da hospedagem atual, plano de publicação sem interromper as páginas públicas, configuração do ambiente, validação de acesso de cliente, conciliação de uma amostra Meta/Google, sinalização de atualização e acompanhamento da primeira sincronização agendada.
 
 Não definir prazos ou capacidade de servidor antes de medir volume de contas, duração das importações, frequência necessária e orçamento operacional. O ranking pode mudar se houver cliente já aguardando TikTok/LinkedIn ou necessidade comercial urgente de uma integração específica.

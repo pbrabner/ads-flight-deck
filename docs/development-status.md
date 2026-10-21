@@ -1,5 +1,15 @@
 # Ads Flight Deck — estado do desenvolvimento
 
+## Atualização dos dados no dashboard — 21/10/2026
+
+Cada seção de plataforma agora mostra a situação das contas vinculadas, incluindo sincronização desativada, falha, execução em andamento/interrompida, ausência de coleta e status indisponível. O detalhamento mostra horário em Brasília e janela da coleta bem-sucedida com data final mais recente. Reprocessar um período antigo não substitui essa referência. O administrador tem acesso direto à gestão do cliente; o cliente recebe apenas informações operacionais resumidas.
+
+Coleta recente significa conclusão há até 36 horas com janela alcançando pelo menos ontem; é um indicador operacional, não uma garantia de cobertura de todo o período selecionado ou anterior. Falhas posteriores não apagam a referência de sucesso. Execuções que ultrapassam dez minutos aparecem como não concluídas. A demonstração permanece explicitamente fictícia e não inventa sincronizações reais.
+
+Nenhuma migração necessária. As contas são resolvidas pela sessão/RLS e por cliente/plataforma antes da leitura de seus registros operacionais no servidor. A função recusa acesso de clientes a outro cliente e devolve um resumo sem tokens ou erros brutos. Falhas na consulta do histórico não impedem a exibição das métricas, mas são identificadas como status indisponível.
+
+Validação: 83 testes de lógica/SQL, cinco testes de navegador, tipagem, lint e build de produção aprovados. Smoke com dados reais confirmou duas plataformas, três contas e dois horários de coleta; desktop e celular sem transbordamento. Não houve sincronização, escrita em anúncios ou mudança de permissões durante a validação. A conciliação completa com os relatórios dos provedores continua pendente.
+
 ## Remoção de conexões sem uso — 21/10/2026
 
 Administradores podem remover conexões em “Gerenciar conexões salvas” ou na seção avançada de conexões. A exclusão exige confirmação explícita, remove apenas o registro e as credenciais locais e não revoga permissões no provedor. Conexões com contas vinculadas, mesmo com sincronização desativada, são bloqueadas pela chave estrangeira existente. A tela lista os vínculos de todos os clientes e orienta reconectar as mesmas contas por uma autorização válida, preservando contas, campanhas e histórico. Nenhuma migração foi necessária.
