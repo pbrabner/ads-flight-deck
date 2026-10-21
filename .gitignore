@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.next-e2e/
+.env*
+!.env.example
+*.tsbuildinfo
+playwright-report/
+test-results/
+.local/
+.vercel/
+supabase/.temp/
+# Public OAuth pages have their own repository and deployment.
+/sites/
+*.log
+.DS_Store
+Thumbs.db

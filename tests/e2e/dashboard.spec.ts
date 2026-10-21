@@ -1,0 +1,113 @@
+import { test, expect } from "@playwright/test";
+
+test("entrada separa as plataformas antes de qualquer filtro", async ({ page }) => {
+  await page.goto("/demo");
+  const meta = page.getByRole("region", { name: "Análise Meta Ads", exact: true });
+  const google = page.getByRole("region", { name: "Análise Google Ads", exact: true });
+  await expect(meta).toBeVisible();
+  await expect(google).toBeVisible();
+  await expect(meta.getByRole("heading", { name: "Investimento ao longo do tempo" })).toBeVisible();
+  await expect(google.getByRole("heading", { name: "Investimento ao longo do tempo" })).toBeVisible();
+  await expect(meta.locator(".metrics-table tbody")).not.toContainText("Google Ads");
+  await expect(google.locator(".metrics-table tbody")).not.toContainText("Meta Ads");
+  const metaSpend = await meta.locator(".kpi-value").first().innerText();
+  const googleSpend = await google.locator(".kpi-value").first().innerText();
+  await page.getByLabel("Plataforma", { exact: true }).selectOption("meta");
+  await expect(google).toHaveCount(0);
+  await expect(meta.locator(".kpi-value").first()).toHaveText(metaSpend);
+  await page.getByLabel("Plataforma", { exact: true }).selectOption("google");
+  await expect(meta).toHaveCount(0);
+  await expect(google.locator(".kpi-value").first()).toHaveText(googleSpend);
+});
+
+test("painel demonstração filtra período e detalha campanha até anúncio", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/demo");
+  await expect(page.getByRole("heading", { name: "Visão geral", exact: true })).toBeVisible();
+  await expect(page.getByText("Dados fictícios", { exact: true })).toBeVisible();
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(6);
+  await page.screenshot({ path: ".local/dashboard-desktop.png", fullPage: true });
+  const allSpend = await page.locator(".kpi-value").first().innerText();
+  await page.getByLabel("Campanhas", { exact: true }).selectOption("active");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(4);
+  await expect(page.locator(".kpi-value").first()).not.toHaveText(allSpend);
+  await expect(page).toHaveURL(/status=active/);
+  await page.getByLabel("Período", { exact: true }).selectOption("30d");
+  await expect(page).toHaveURL(/range=30d/);
+  await expect(page).toHaveURL(/status=active/);
+  await page.locator(".campaign-disclosure > summary").first().click();
+  await page.locator(".metrics-table tbody tr").first().getByRole("link").click();
+  await expect(page.getByRole("heading", { name: "Conjuntos", exact: true })).toBeVisible();
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(2);
+  await expect(page).toHaveURL(/range=30d/);
+  await page.locator(".metrics-table tbody tr").first().getByRole("link").click();
+  await expect(page.getByRole("heading", { name: "Anúncios", exact: true })).toBeVisible();
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(2);
+  await page.getByRole("link", { name: "Voltar", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Conjuntos", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Voltar", exact: true }).click();
+  await expect(page.getByLabel("Campanhas", { exact: true })).toHaveValue("active");
+  await page.getByLabel("Campanhas", { exact: true }).selectOption("paused");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(2);
+  await expect(page.locator(".metrics-table tbody tr").first()).toContainText("Pausado");
+  expect(errors).toEqual([]);
+});
+
+test("período vazio e login sem ambiente dão orientação explícita", async ({ page, request }) => {
+  await page.goto("/demo?range=custom&from=2020-01-01&to=2020-01-10");
+  await expect(page.getByText("Sem investimento registrado no período.")).toHaveCount(2);
+  await expect(page.getByText("Sem resultados disponíveis no período.")).toHaveCount(2);
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/login\?error=setup/);
+  await expect(page.getByRole("button", { name: "Entrar", exact: true })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Explorar demonstração" })).toBeVisible();
+  expect((await request.get("/api/cron/sync")).status()).toBe(503);
+  expect((await request.get("/api/oauth/google/start")).status()).toBe(403);
+});
+
+test("mobile preserva navegação e não transborda a página", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/demo");
+  await expect(page.getByRole("heading", { name: "Visão geral", exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: ".local/dashboard-mobile.png", fullPage: true });
+  await page.getByRole("link", { name: "Acessar minha conta" }).click();
+  await expect(page.getByRole("heading", { name: "Bem-vindo ao seu painel" })).toBeVisible();
+  await page.screenshot({ path: ".local/login-mobile.png", fullPage: true });
+});
+
+test("plataforma filtra o painel e permanece ao trocar período, status e detalhar", async ({ page }) => {
+  await page.goto("/demo");
+  const allSpend = await page.locator(".kpi-value").first().innerText();
+  await page.getByLabel("Plataforma", { exact: true }).selectOption("google");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(3);
+  await expect(page.locator(".metrics-table tbody")).not.toContainText("Meta Ads");
+  await expect(page.locator(".kpi-value").first()).not.toHaveText(allSpend);
+  await expect(page.getByRole("heading", { name: "Conversões configuradas ao longo do tempo" })).toBeVisible();
+  await page.getByLabel("Campanhas", { exact: true }).selectOption("active");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(2);
+  await expect(page).toHaveURL(/platform=google/);
+  await page.getByLabel("Período", { exact: true }).selectOption("30d");
+  await expect(page).toHaveURL(/range=30d/);
+  await expect(page).toHaveURL(/platform=google/);
+  await page.locator(".metrics-table tbody tr").first().getByRole("link").click();
+  await expect(page.getByRole("heading", { name: "Conjuntos", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/platform=google/);
+  await page.locator(".metrics-table tbody tr").first().getByRole("link").click();
+  await expect(page.getByRole("heading", { name: "Anúncios", exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/platform=google/);
+  await page.getByRole("link", { name: "Voltar", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Conjuntos", exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "Voltar", exact: true }).click();
+  await expect(page.getByLabel("Plataforma", { exact: true })).toHaveValue("google");
+  await expect(page.getByLabel("Campanhas", { exact: true })).toHaveValue("active");
+  await page.getByLabel("Plataforma", { exact: true }).selectOption("meta");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(2);
+  await expect(page.locator(".metrics-table tbody")).not.toContainText("Google Ads");
+  await page.getByLabel("Plataforma", { exact: true }).selectOption("all");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(4);
+  await page.goto("/demo?platform=invalid");
+  await expect(page.getByLabel("Plataforma", { exact: true })).toHaveValue("all");
+  await expect(page.locator(".metrics-table tbody tr")).toHaveCount(6);
+});
